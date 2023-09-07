@@ -1,38 +1,24 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
     provider = "prisma-client-js"
 }
 
 datasource db {
     provider = "cockroachdb"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
     url      = env("DATABASE_URL")
 }
 
-model Example {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
-
-// Necessary for Next auth
 model Account {
     id                String  @id @default(cuid())
     userId            String
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String? // @db.Text
-    access_token      String? // @db.Text
+    refresh_token     String?
+    access_token      String?
     expires_at        Int?
     token_type        String?
     scope             String?
-    id_token          String? // @db.Text
+    id_token          String?
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -48,13 +34,23 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
+    id                     String                   @id @default(cuid())
+    name                   String?
+    email                  String?                  @unique
+    emailVerified          DateTime?
+    image                  String?
+    backgroundImage        String?
+    handle                 String?                  @unique
+    accounts               Account[]
+    Announcement           Announcement[]
+    AnnouncementEngagement AnnouncementEngagement[]
+    Comment                Comment[]
+    followers              FollowEngagement[]       @relation("Followers")
+    following              FollowEngagement[]       @relation("Following")
+    Playlist               Playlist[]
+    sessions               Session[]
+    Video                  Video[]
+    VideoEngagements       VideoEngagements[]
 }
 
 model VerificationToken {
@@ -63,4 +59,125 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Video {
+    id               String             @id @default(cuid())
+    title            String?
+    thumbnail        String?
+    description      String?
+    videoUrl         String
+    publish          Boolean            @default(true)
+    userId           String
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
+    Comment          Comment[]
+    PlaylistHasVideo PlaylistHasVideo[]
+    user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    VideoEngagements VideoEngagements[]
+
+    @@index([userId])
+}
+
+model VideoEngagements {
+    id             String           @id @default(cuid())
+    userId         String?
+    videoId        String?
+    engagementType EnagagementTypes
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    user           User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    video          Video?           @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([videoId])
+}
+
+model Comment {
+    id        String   @id @default(cuid())
+    message   String?
+    userId    String?
+    videoId   String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    video     Video?   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@index([videoId])
+}
+
+model Announcement {
+    id                     String                   @id @default(cuid())
+    message                String
+    userId                 String
+    createdAt              DateTime                 @default(now())
+    updatedAt              DateTime                 @updatedAt
+    user                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    AnnouncementEngagement AnnouncementEngagement[]
+
+    @@index([userId])
+}
+
+model AnnouncementEngagement {
+    engagementType EnagagementTypes
+    announcementId String
+    userId         String
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    announcement   Announcement     @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+    user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([userId, announcementId])
+    @@index([userId])
+    @@index([announcementId])
+}
+
+model FollowEngagement {
+    followerId     String
+    followingId    String
+    engagementType EnagagementTypes
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+    follower       User             @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+    following      User             @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+    @@id([followerId, followingId])
+    @@index([followerId])
+    @@index([followingId])
+}
+
+model Playlist {
+    id               String             @id @default(cuid())
+    title            String
+    description      String
+    userId           String
+    createdAt        DateTime           @default(now())
+    updatedAt        DateTime           @updatedAt
+    user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    PlaylistHasVideo PlaylistHasVideo[]
+
+    @@index([userId])
+}
+
+model PlaylistHasVideo {
+    id         String   @id @default(cuid())
+    playlistId String
+    videoId    String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+    video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+    @@index([playlistId, videoId])
+    @@index([playlistId])
+    @@index([videoId])
+}
+
+enum EnagagementTypes {
+    LIKE
+    DISLIKE
+    VIEW
+    SAVE
+    FOLLOW
 }
