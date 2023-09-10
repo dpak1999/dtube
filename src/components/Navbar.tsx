@@ -11,10 +11,18 @@ import { Logo } from "./Icons/Logo";
 import Search from "./Icons/Search";
 import Router from "next/router";
 import { Menu, Transition } from "@headlessui/react";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import DotsVertical from "./Icons/DotsVertical";
 import { UserImage } from "./VideoComponent";
 import Button from "./Buttons/Button";
+import User from "./Icons/User";
+import Brush from "./Icons/Brush";
+import HelpCircle from "./Icons/HelpCircle";
+import LogOut from "./Icons/LogOut";
+import MessagePlusSquare from "./Icons/MessagePlusSquare";
+import Settings from "./Icons/Settings";
+import File from "./Icons/File";
+import Lock from "./Icons/Lock";
 
 interface NavbarProps {
   children?: JSX.Element;
@@ -27,9 +35,95 @@ interface NavigationItem {
   lineAbove: boolean;
 }
 
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
 const Navbar: FC<NavbarProps> = ({ children }) => {
   const { data: sessionData } = useSession();
+  const userId = sessionData?.user.id;
+
   const [searchInput, setSearchInput] = useState("");
+
+  const signedInNavigation: NavigationItem[] = [
+    {
+      icon: (className) => <User className={className} />,
+      name: "View Profile",
+      path: `/${String(userId)}/ProfileVideos`,
+      lineAbove: true,
+    },
+    {
+      icon: (className) => <Brush className={className} />,
+      name: "Creator Studio",
+      path: "/Dashboard",
+      lineAbove: false,
+    },
+    {
+      icon: (className) => <HelpCircle className={className} />,
+      name: "Help",
+      path: "/Blog/Help",
+      lineAbove: true,
+    },
+    {
+      icon: (className) => <Settings className={className} />,
+      name: "Settings",
+      path: "/Settings",
+      lineAbove: false,
+    },
+    {
+      icon: (className) => <MessagePlusSquare className={className} />,
+      name: "Feedback",
+      path: "#",
+      lineAbove: false,
+    },
+    {
+      icon: (className) => <File className={className} />,
+      name: "Terms of Service",
+      path: "/Blog/TOS",
+      lineAbove: true,
+    },
+    {
+      icon: (className) => <Lock className={className} />,
+      name: "Privacy",
+      path: "/Blog/Privacy",
+      lineAbove: false,
+    },
+    {
+      icon: (className) => <LogOut className={className} />,
+      name: "Log Out",
+      path: "sign-out",
+      lineAbove: true,
+    },
+  ];
+
+  const signedOutNavigation: NavigationItem[] = [
+    {
+      icon: (className) => <HelpCircle className={className} />,
+      name: "Help",
+      path: "/Blog/Help",
+      lineAbove: true,
+    },
+    {
+      icon: (className) => <MessagePlusSquare className={className} />,
+      name: "Feedback",
+      path: `mailto:vidchill@vidchill.com`,
+      lineAbove: false,
+    },
+    {
+      icon: (className) => <File className={className} />,
+      name: "Terms of Service",
+      path: "/Blog/TOS",
+      lineAbove: true,
+    },
+    {
+      icon: (className) => <Lock className={className} />,
+      name: "Privacy",
+      path: "/Blog/Privacy",
+      lineAbove: false,
+    },
+  ];
+
+  const navigationMenu = sessionData ? signedInNavigation : signedOutNavigation;
 
   const handleSearch = async () => {
     try {
@@ -132,6 +226,33 @@ const Navbar: FC<NavbarProps> = ({ children }) => {
                         Menu
                       </p>
                     )}
+                    {navigationMenu.map((item) => (
+                      <Menu.Item key={item.name}>
+                        {({ active }) => (
+                          <Link
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (item.path === "sign-out") {
+                                void signOut();
+                              } else {
+                                void Router.push(item.path || "/");
+                              }
+                            }}
+                            href={item.path || "/"}
+                            className={classNames(
+                              active ? "bg-gray-100" : "",
+                              "block px-4 py-2 text-sm text-gray-700",
+                              item.lineAbove ? "border-t border-gray-700" : "",
+                            )}
+                          >
+                            <div className="flex items-center">
+                              {item.icon("h-4 w-4 stroke-gray-700")}
+                              <div className="pl-2">{item.name}</div>
+                            </div>
+                          </Link>
+                        )}
+                      </Menu.Item>
+                    ))}
                   </Menu.Items>
                 </Transition>
               </div>
