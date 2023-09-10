@@ -5,10 +5,16 @@ import React, {
   type FC,
   type JSX,
   useState,
+  Fragment,
 } from "react";
 import { Logo } from "./Icons/Logo";
 import Search from "./Icons/Search";
 import Router from "next/router";
+import { Menu, Transition } from "@headlessui/react";
+import { signIn, useSession } from "next-auth/react";
+import DotsVertical from "./Icons/DotsVertical";
+import { UserImage } from "./VideoComponent";
+import Button from "./Buttons/Button";
 
 interface NavbarProps {
   children?: JSX.Element;
@@ -22,6 +28,7 @@ interface NavigationItem {
 }
 
 const Navbar: FC<NavbarProps> = ({ children }) => {
+  const { data: sessionData } = useSession();
   const [searchInput, setSearchInput] = useState("");
 
   const handleSearch = async () => {
@@ -74,6 +81,81 @@ const Navbar: FC<NavbarProps> = ({ children }) => {
                 </div>
               </div>
             </div>
+          </div>
+          <div className="flex items-center lg:hidden">{children}</div>
+          <div className="m-0 hidden w-max px-0 lg:flex lg:items-center lg:justify-end xl:col-span-2">
+            <Menu as={"div"} className="relative ml-5 flex-shrink-0">
+              <div>
+                <Menu.Button
+                  className={
+                    "focus:ring-primary-500 flex rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  }
+                >
+                  {sessionData ? (
+                    <UserImage image={sessionData?.user.image ?? ""} />
+                  ) : (
+                    <DotsVertical className="w-5 stroke-gray-700" />
+                  )}
+                </Menu.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items
+                    className={
+                      "absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    }
+                  >
+                    {sessionData ? (
+                      <div className="mx-4 my-2 flex">
+                        <UserImage image={sessionData?.user.image ?? ""} />
+                        <div className="ml-2 flex w-full flex-col justify-start truncate">
+                          <p className="truncate text-sm font-semibold text-gray-700">
+                            {sessionData && (
+                              <span>{sessionData?.user?.name}</span>
+                            )}
+                          </p>
+                          <p className="truncate text-sm font-semibold text-gray-600">
+                            {sessionData && (
+                              <span>{sessionData?.user?.email}</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mx-4 my-2 flex text-center text-sm font-semibold text-gray-700 ">
+                        Menu
+                      </p>
+                    )}
+                  </Menu.Items>
+                </Transition>
+              </div>
+            </Menu>
+            {sessionData ? (
+              ""
+            ) : (
+              <div className="flex flex-row space-x-3">
+                <Button
+                  variant="tertiary-gray"
+                  size="md"
+                  onClick={!sessionData ? () => void signIn() : () => ""}
+                >
+                  Log in
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={!sessionData ? () => void signIn() : () => ""}
+                >
+                  Sign up
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

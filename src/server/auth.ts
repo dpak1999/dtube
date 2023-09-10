@@ -43,6 +43,11 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM,
     }),
   ],
+  theme: {
+    colorScheme: "light",
+    brandColor: "#11999E",
+    buttonText: "#fff",
+  },
 };
 
 export const getServerAuthSession = (ctx: {
