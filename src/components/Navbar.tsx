@@ -23,6 +23,7 @@ import MessagePlusSquare from "./Icons/MessagePlusSquare";
 import Settings from "./Icons/Settings";
 import File from "./Icons/File";
 import Lock from "./Icons/Lock";
+import { classNames } from "~/utils";
 
 interface NavbarProps {
   children?: JSX.Element;
@@ -33,10 +34,6 @@ interface NavigationItem {
   name: string;
   path: string;
   lineAbove: boolean;
-}
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
 }
 
 const Navbar: FC<NavbarProps> = ({ children }) => {
